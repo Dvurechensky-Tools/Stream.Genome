@@ -1,0 +1,63 @@
+<Layouts.flash_group flash={@flash} />
+
+<main class="min-h-screen bg-base-100 text-base-content">
+  <section class="border-b border-base-300">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+          Stream.Genome
+        </p>
+        <h1 class="text-xl font-semibold">Manual Stream Fragment</h1>
+      </div>
+      <.link navigate={~p"/admin"} class="rounded-md bg-base-200 px-3 py-2 text-sm font-medium">
+        Admin Console
+      </.link>
+    </div>
+  </section>
+
+  <section class="mx-auto grid max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[1fr_24rem]">
+    <.form
+      :let={f}
+      for={%{}}
+      as={:ingest}
+      action={~p"/admin/ingest"}
+      class="rounded-md border border-base-300 p-4"
+    >
+      <label class="text-sm font-semibold" for="ingest_text">
+        Paste transcript or chat lines
+      </label>
+      <textarea
+        id="ingest_text"
+        name={f[:text].name}
+        class="textarea textarea-bordered mt-3 min-h-[24rem] w-full font-mono text-sm leading-6"
+        placeholder={@sample_text}
+      >{if @text == "", do: @sample_text, else: @text}</textarea>
+
+      <div class="mt-4 flex items-center justify-end gap-3">
+        <.link navigate={~p"/admin"} class="rounded-md px-4 py-2 text-sm hover:bg-base-200">
+          Cancel
+        </.link>
+        <button class="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-content">
+          Save Fragment
+        </button>
+      </div>
+    </.form>
+
+    <aside class="space-y-4">
+      <section class="rounded-md border border-base-300 p-4">
+        <h2 class="font-semibold">What This Saves</h2>
+        <div class="mt-4 space-y-3 text-sm leading-6 text-base-content/70">
+          <p>Each line becomes a time-ordered segment.</p>
+          <p>Names before a colon become speakers.</p>
+          <p>Repeated or emphasized phrases become candidate memes or phrases.</p>
+          <p>The result appears on the universe map after saving.</p>
+        </div>
+      </section>
+
+      <section class="rounded-md border border-base-300 p-4">
+        <h2 class="font-semibold">Example Shape</h2>
+        <pre class="mt-4 whitespace-pre-wrap rounded bg-base-200 p-3 text-xs leading-5"><%= @sample_text %></pre>
+      </section>
+    </aside>
+  </section>
+</main>

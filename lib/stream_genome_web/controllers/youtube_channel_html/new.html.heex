@@ -1,0 +1,66 @@
+<Layouts.flash_group flash={@flash} />
+
+<main class="min-h-screen bg-base-100 text-base-content">
+  <section class="border-b border-base-300">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+          Stream.Genome
+        </p>
+        <h1 class="text-xl font-semibold">YouTube Channel Source</h1>
+      </div>
+      <.link navigate={~p"/admin"} class="rounded-md bg-base-200 px-3 py-2 text-sm font-medium">
+        Admin Console
+      </.link>
+    </div>
+  </section>
+
+  <section class="mx-auto grid max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[1fr_24rem]">
+    <.form
+      :let={f}
+      for={%{}}
+      as={:youtube_channel}
+      action={~p"/admin/youtube/channel"}
+      class="rounded-md border border-base-300 p-4"
+    >
+      <label class="text-sm font-semibold" for="youtube_channel_url">
+        Paste YouTube channel address
+      </label>
+      <input
+        id="youtube_channel_url"
+        name={f[:url].name}
+        value={@url}
+        class="input input-bordered mt-3 w-full"
+        placeholder="https://www.youtube.com/@channel"
+      />
+
+      <div class="mt-4 flex items-center justify-end gap-3">
+        <.link navigate={~p"/admin"} class="rounded-md px-4 py-2 text-sm hover:bg-base-200">
+          Cancel
+        </.link>
+        <button class="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-content">
+          Register Channel
+        </button>
+      </div>
+    </.form>
+
+    <aside class="space-y-4">
+      <section class="rounded-md border border-base-300 p-4">
+        <h2 class="font-semibold">What Happens Now</h2>
+        <div class="mt-4 space-y-3 text-sm leading-6 text-base-content/70">
+          <p>The channel is saved as a real YouTube source.</p>
+          <p>No videos are downloaded yet.</p>
+          <p>The next step will fetch video metadata and transcripts from this source.</p>
+        </div>
+      </section>
+
+      <section class="rounded-md border border-base-300 p-4">
+        <h2 class="font-semibold">Accepted Forms</h2>
+        <pre class="mt-4 whitespace-pre-wrap rounded bg-base-200 p-3 text-xs leading-5">https://www.youtube.com/@channel
+https://www.youtube.com/channel/UC...
+https://www.youtube.com/c/name
+https://www.youtube.com/user/name</pre>
+      </section>
+    </aside>
+  </section>
+</main>

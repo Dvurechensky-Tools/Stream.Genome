@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang={assigns[:locale] || "en"}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <meta
+      name="description"
+      content={
+        assigns[:meta_description] ||
+          "#{assigns[:brand_name] || "Stream Genome"} maps creator universes: memes, lore, callbacks, arcs, conflicts, communities, and emotional timelines across years of content."
+      }
+    />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#080a0f" />
+    <link rel="icon" href={~p"/favicon.ico"} sizes="any" />
+    <link rel="alternate" hreflang="ru" href={~p"/?lang=ru"} />
+    <link rel="alternate" hreflang="en" href={~p"/?lang=en"} />
+    <link rel="canonical" href={assigns[:canonical_url] || ~p"/"} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={assigns[:brand_name] || "Stream Genome"} />
+    <meta property="og:url" content={assigns[:canonical_url] || ~p"/"} />
+    <meta
+      property="og:title"
+      content={assigns[:page_title] || assigns[:brand_name] || "Stream Genome"}
+    />
+    <meta
+      property="og:description"
+      content={
+        assigns[:meta_description] ||
+          "A public atlas of creator lore, meme evolution, narrative callbacks, and internet culture."
+      }
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <.live_title
+      default={assigns[:brand_name] || "Stream Genome"}
+      suffix=" · Creator Universe Engine"
+      phx-no-format
+    >{assigns[:page_title]}</.live_title>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
+    </script>
+    <script>
+      (() => {
+        const setTheme = (theme) => {
+          if (theme === "system") {
+            localStorage.removeItem("phx:theme");
+            document.documentElement.removeAttribute("data-theme");
+          } else {
+            localStorage.setItem("phx:theme", theme);
+            document.documentElement.setAttribute("data-theme", theme);
+          }
+        };
+        if (!document.documentElement.hasAttribute("data-theme")) {
+          setTheme(localStorage.getItem("phx:theme") || "system");
+        }
+        window.addEventListener("storage", (e) => e.key === "phx:theme" && setTheme(e.newValue || "system"));
+
+        window.addEventListener("phx:set-theme", (e) => setTheme(e.target.dataset.phxTheme));
+      })();
+    </script>
+  </head>
+  <body>
+    {@inner_content}
+  </body>
+</html>

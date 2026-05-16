@@ -1,0 +1,90 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      MIX_ENV: dev
+      POSTGRES_HOST: postgres
+      DB_POOL_SIZE: 5
+      ECTO_LOG_LEVEL: "false"
+      PHX_BIND: 0.0.0.0
+      YOUTUBE_PROXY_HOST: host.docker.internal
+      YOUTUBE_PROXY_PORT: 10808
+      YOUTUBE_ARCHIVE_LIMIT: 7500
+      YOUTUBE_DISCOVERY_ADAPTER: yt_dlp
+      YOUTUBE_TRANSCRIPT_LANGS: ru-orig,ru
+      YT_DLP_JS_RUNTIME: node
+      YT_DLP_COOKIES_PATH: ${YT_DLP_COOKIES_PATH:-/data/youtube/cookies.txt}
+      YT_DLP_PATH: yt-dlp
+      AI_PROVIDER: ${AI_PROVIDER:-disabled}
+      AI_ENDPOINT: ${AI_ENDPOINT:-https://api.openai.com/v1/chat/completions}
+      AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
+      AI_TEMPERATURE: ${AI_TEMPERATURE:-0.2}
+      AI_TIMEOUT_MS: ${AI_TIMEOUT_MS:-120000}
+      AI_INPUT_USD_PER_1M: ${AI_INPUT_USD_PER_1M:-0.15}
+      AI_OUTPUT_USD_PER_1M: ${AI_OUTPUT_USD_PER_1M:-0.60}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/app
+      - ./data/youtube:/data/youtube
+      - deps_data:/app/deps
+      - build_data:/app/_build
+      - assets_node_data:/app/assets/node_modules
+    depends_on:
+      - postgres
+      - memgraph
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: >
+      sh -c "mix deps.get &&
+             mix assets.setup &&
+             mix ecto.create &&
+             mix ecto.migrate &&
+             mix phx.server"
+
+  postgres:
+    image: postgres:16-alpine
+    command: ["postgres", "-c", "max_connections=200"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: stream_genome_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  memgraph:
+    image: memgraph/memgraph-mage:latest
+    ports:
+      - "7687:7687"
+      - "3000:3000"
+    volumes:
+      - memgraph_data:/var/lib/memgraph
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@stream.genome
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      - postgres
+
+volumes:
+  deps_data:
+  build_data:
+  assets_node_data:
+  postgres_data:
+  memgraph_data:
+  pgadmin_data:

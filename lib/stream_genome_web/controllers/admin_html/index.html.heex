@@ -1,0 +1,491 @@
+<Layouts.flash_group flash={@flash} />
+
+<main class="min-h-screen bg-base-100 text-base-content">
+  <section class="border-b border-base-300">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+          Stream.Genome
+        </p>
+        <h1 class="text-xl font-semibold">Admin Console</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <a
+          href="http://localhost:5050"
+          target="_blank"
+          rel="noreferrer"
+          class="rounded-md bg-base-200 px-3 py-2 text-sm font-medium"
+        >
+          pgAdmin
+        </a>
+        <.link navigate={~p"/"} class="rounded-md bg-base-200 px-3 py-2 text-sm font-medium">
+          Public Portal
+        </.link>
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto grid max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[18rem_1fr]">
+    <aside class="space-y-2 text-sm">
+      <.link
+        navigate={~p"/admin"}
+        class="flex items-center justify-between rounded-md bg-base-200 px-3 py-2 font-medium"
+      >
+        Overview <span class="text-base-content/40">01</span>
+      </.link>
+      <.link
+        navigate={~p"/admin/youtube/channel"}
+        class="flex items-center justify-between rounded-md px-3 py-2 hover:bg-base-200"
+      >
+        Add YouTube <span class="text-base-content/40">02</span>
+      </.link>
+      <.link
+        navigate={~p"/admin/ingest"}
+        class="flex items-center justify-between rounded-md px-3 py-2 hover:bg-base-200"
+      >
+        Paste Fragment <span class="text-base-content/40">03</span>
+      </.link>
+    </aside>
+
+    <div class="space-y-6">
+      <section class="grid gap-4 md:grid-cols-4">
+        <div class="rounded-md border border-base-300 p-4">
+          <p class="text-xs uppercase text-base-content/50">Sources</p>
+          <p class="mt-2 text-3xl font-semibold">{@snapshot.counts.sources}</p>
+        </div>
+        <div class="rounded-md border border-base-300 p-4">
+          <p class="text-xs uppercase text-base-content/50">Segments</p>
+          <p class="mt-2 text-3xl font-semibold">{@snapshot.counts.segments}</p>
+        </div>
+        <div class="rounded-md border border-base-300 p-4">
+          <p class="text-xs uppercase text-base-content/50">Entities</p>
+          <p class="mt-2 text-3xl font-semibold">{@snapshot.counts.entities}</p>
+        </div>
+        <div class="rounded-md border border-base-300 p-4">
+          <p class="text-xs uppercase text-base-content/50">Edges</p>
+          <p class="mt-2 text-3xl font-semibold">{@snapshot.counts.edges}</p>
+        </div>
+      </section>
+
+      <section class="grid gap-6 lg:grid-cols-2">
+        <div class="rounded-md border border-base-300 p-4 lg:col-span-2">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 class="font-semibold">Database Console</h2>
+              <p class="mt-1 text-sm text-base-content/60">
+                pgAdmin runs in Docker on localhost:5050.
+              </p>
+            </div>
+            <a
+              href="http://localhost:5050"
+              target="_blank"
+              rel="noreferrer"
+              class="rounded-md bg-base-200 px-4 py-2 text-sm font-semibold hover:bg-base-300"
+            >
+              Open pgAdmin
+            </a>
+          </div>
+          <div class="mt-4 grid gap-3 text-sm md:grid-cols-5">
+            <div class="rounded-md bg-base-200/70 p-3">
+              <p class="text-xs uppercase text-base-content/50">Login</p>
+              <p class="mt-1 break-all font-medium">admin@stream.genome</p>
+            </div>
+            <div class="rounded-md bg-base-200/70 p-3">
+              <p class="text-xs uppercase text-base-content/50">Password</p>
+              <p class="mt-1 font-medium">admin</p>
+            </div>
+            <div class="rounded-md bg-base-200/70 p-3">
+              <p class="text-xs uppercase text-base-content/50">DB host</p>
+              <p class="mt-1 font-medium">postgres</p>
+            </div>
+            <div class="rounded-md bg-base-200/70 p-3">
+              <p class="text-xs uppercase text-base-content/50">DB user</p>
+              <p class="mt-1 font-medium">postgres</p>
+            </div>
+            <div class="rounded-md bg-base-200/70 p-3">
+              <p class="text-xs uppercase text-base-content/50">DB password</p>
+              <p class="mt-1 font-medium">postgres</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-md border border-base-300 p-4 lg:col-span-2">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 class="font-semibold">YouTube Cookies</h2>
+              <p class="mt-1 text-sm text-base-content/60">
+                Required for age-restricted videos. Current file: {@cookies_status.path}
+              </p>
+            </div>
+            <span class={[
+              "rounded px-2 py-1 text-xs font-semibold",
+              if(@cookies_status.exists?,
+                do: "bg-success/15 text-success",
+                else: "bg-error/15 text-error"
+              )
+            ]}>
+              {if @cookies_status.exists?,
+                do: "cookies present / #{@cookies_status.size} bytes",
+                else: "cookies missing"}
+            </span>
+          </div>
+
+          <form
+            method="post"
+            action={~p"/admin/youtube-cookies"}
+            class="mt-4 grid gap-3 md:grid-cols-6"
+          >
+            <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+
+            <label class="md:col-span-6">
+              <span class="text-xs uppercase text-base-content/50">Container path</span>
+              <input
+                name="youtube_cookies[path]"
+                value={@cookies_status.path}
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              />
+            </label>
+
+            <label class="md:col-span-6">
+              <span class="text-xs uppercase text-base-content/50">cookies.txt content</span>
+              <textarea
+                name="youtube_cookies[content]"
+                rows="8"
+                placeholder="# Netscape HTTP Cookie File"
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2 font-mono text-xs"
+              ></textarea>
+              <span class="mt-1 block text-xs text-base-content/50">
+                Paste exported YouTube cookies here. The content is written to the runtime data mount and is ignored by git.
+              </span>
+            </label>
+
+            <div class="flex items-end md:col-span-2">
+              <button class="w-full rounded-md bg-warning px-4 py-2 font-semibold text-warning-content">
+                Save YouTube Cookies
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="rounded-md border border-base-300 p-4 lg:col-span-2">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 class="font-semibold">AI Provider</h2>
+              <p class="mt-1 text-sm text-base-content/60">
+                Current model route: {to_string(@ai_runtime.provider)} / {@ai_runtime.model ||
+                  "no model"}
+              </p>
+            </div>
+            <span class={[
+              "rounded px-2 py-1 text-xs font-semibold",
+              if(@ai_runtime.enabled?,
+                do: "bg-success/15 text-success",
+                else: "bg-error/15 text-error"
+              )
+            ]}>
+              {if @ai_runtime.enabled?, do: "model ready", else: "model disabled"}
+            </span>
+          </div>
+
+          <form
+            method="post"
+            action={~p"/admin/ai-settings"}
+            class="mt-4 grid gap-3 md:grid-cols-6"
+          >
+            <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+
+            <label class="md:col-span-2">
+              <span class="text-xs uppercase text-base-content/50">Provider</span>
+              <select
+                name="ai_settings[provider]"
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              >
+                <option value="disabled" selected={@ai_settings["provider"] == "disabled"}>
+                  Disabled
+                </option>
+                <option
+                  value="openai_compatible"
+                  selected={@ai_settings["provider"] == "openai_compatible"}
+                >
+                  OpenAI-compatible
+                </option>
+                <option value="ollama" selected={@ai_settings["provider"] == "ollama"}>
+                  Ollama
+                </option>
+              </select>
+            </label>
+
+            <label class="md:col-span-4">
+              <span class="text-xs uppercase text-base-content/50">Endpoint</span>
+              <input
+                name="ai_settings[endpoint]"
+                value={@ai_settings["endpoint"]}
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              />
+              <span class="mt-1 block text-xs text-base-content/50">
+                OpenAI: https://api.openai.com/v1/chat/completions
+              </span>
+            </label>
+
+            <label class="md:col-span-2">
+              <span class="text-xs uppercase text-base-content/50">Model</span>
+              <input
+                name="ai_settings[model]"
+                value={@ai_settings["model"]}
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              />
+            </label>
+
+            <label class="md:col-span-1">
+              <span class="text-xs uppercase text-base-content/50">Temperature</span>
+              <input
+                name="ai_settings[temperature]"
+                value={@ai_settings["temperature"]}
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              />
+            </label>
+
+            <label class="md:col-span-1">
+              <span class="text-xs uppercase text-base-content/50">Timeout ms</span>
+              <input
+                name="ai_settings[timeout_ms]"
+                value={@ai_settings["timeout_ms"]}
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              />
+            </label>
+
+            <label class="md:col-span-1">
+              <span class="text-xs uppercase text-base-content/50">Input $/1M</span>
+              <input
+                name="ai_settings[input_usd_per_1m]"
+                value={@ai_settings["input_usd_per_1m"]}
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              />
+            </label>
+
+            <label class="md:col-span-1">
+              <span class="text-xs uppercase text-base-content/50">Output $/1M</span>
+              <input
+                name="ai_settings[output_usd_per_1m]"
+                value={@ai_settings["output_usd_per_1m"]}
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              />
+            </label>
+
+            <label class="md:col-span-2">
+              <span class="text-xs uppercase text-base-content/50">API key</span>
+              <input
+                name="ai_settings[api_key]"
+                type="password"
+                placeholder={
+                  if @ai_settings["api_key_configured"],
+                    do: "Configured. Leave blank to keep.",
+                    else: "Paste API key"
+                }
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              />
+              <span class="mt-1 block text-xs text-base-content/50">
+                Stored for the admin runtime. Leave blank to keep the current key.
+              </span>
+            </label>
+
+            <div class="flex items-end md:col-span-2">
+              <button class="w-full rounded-md bg-info px-4 py-2 font-semibold text-info-content">
+                Save AI Provider
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="rounded-md border border-base-300 p-4 lg:col-span-2">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 class="font-semibold">Crawler Network</h2>
+              <p class="mt-1 text-sm text-base-content/60">
+                Current route: {@proxy_label}
+              </p>
+            </div>
+            <span class="rounded bg-base-200 px-2 py-1 text-xs text-base-content/60">
+              Docker proxy host: host.docker.internal
+            </span>
+          </div>
+
+          <form
+            method="post"
+            action={~p"/admin/crawler-settings"}
+            class="mt-4 grid gap-3 md:grid-cols-6"
+          >
+            <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+
+            <label class="flex items-center gap-2 rounded-md bg-base-200/70 p-3 md:col-span-2">
+              <input
+                type="checkbox"
+                name="crawler_settings[proxy_enabled]"
+                checked={@crawler_settings["proxy_enabled"]}
+                class="checkbox checkbox-sm"
+              />
+              <span class="text-sm font-medium">Use proxy</span>
+            </label>
+
+            <label class="md:col-span-1">
+              <span class="text-xs uppercase text-base-content/50">Scheme</span>
+              <select
+                name="crawler_settings[proxy_scheme]"
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              >
+                <option value="http" selected={@crawler_settings["proxy_scheme"] == "http"}>
+                  http
+                </option>
+                <option value="https" selected={@crawler_settings["proxy_scheme"] == "https"}>
+                  https
+                </option>
+              </select>
+            </label>
+
+            <label class="md:col-span-2">
+              <span class="text-xs uppercase text-base-content/50">Proxy host</span>
+              <input
+                name="crawler_settings[proxy_host]"
+                value={@crawler_settings["proxy_host"]}
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              />
+            </label>
+
+            <label>
+              <span class="text-xs uppercase text-base-content/50">Port</span>
+              <input
+                name="crawler_settings[proxy_port]"
+                value={@crawler_settings["proxy_port"]}
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              />
+            </label>
+
+            <label class="md:col-span-2">
+              <span class="text-xs uppercase text-base-content/50">Discovery</span>
+              <select
+                name="crawler_settings[discovery_adapter]"
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              >
+                <option
+                  value="yt_dlp"
+                  selected={@crawler_settings["discovery_adapter"] == "yt_dlp"}
+                >
+                  Full archive via yt-dlp
+                </option>
+                <option
+                  value="atom_feed"
+                  selected={@crawler_settings["discovery_adapter"] == "atom_feed"}
+                >
+                  Atom feed only
+                </option>
+              </select>
+            </label>
+
+            <label class="md:col-span-2">
+              <span class="text-xs uppercase text-base-content/50">Archive limit</span>
+              <input
+                name="crawler_settings[archive_limit]"
+                value={@crawler_settings["archive_limit"]}
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              />
+            </label>
+
+            <label class="md:col-span-4">
+              <span class="text-xs uppercase text-base-content/50">Transcript languages</span>
+              <input
+                name="crawler_settings[transcript_languages]"
+                value={@crawler_settings["transcript_languages"]}
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              />
+              <span class="mt-1 block text-xs text-base-content/50">
+                Prefer original Russian subtitles first. English is fallback.
+              </span>
+            </label>
+
+            <label class="md:col-span-2">
+              <span class="text-xs uppercase text-base-content/50">yt-dlp JS runtime</span>
+              <input
+                name="crawler_settings[yt_dlp_js_runtime]"
+                value={@crawler_settings["yt_dlp_js_runtime"]}
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              />
+              <span class="mt-1 block text-xs text-base-content/50">
+                Use node in Docker for YouTube player parsing.
+              </span>
+            </label>
+
+            <label class="md:col-span-4">
+              <span class="text-xs uppercase text-base-content/50">yt-dlp cookies file</span>
+              <input
+                name="crawler_settings[yt_dlp_cookies_path]"
+                value={@crawler_settings["yt_dlp_cookies_path"]}
+                placeholder="/data/youtube/cookies.txt"
+                class="mt-1 w-full rounded-md bg-base-200 px-3 py-2"
+              />
+              <span class="mt-1 block text-xs text-base-content/50">
+                Required for age-restricted YouTube videos. Mount cookies.txt into Docker and point yt-dlp here.
+              </span>
+            </label>
+
+            <div class="flex items-end md:col-span-2">
+              <button class="w-full rounded-md bg-primary px-4 py-2 font-semibold text-primary-content">
+                Save Crawler Settings
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="rounded-md border border-base-300 p-4">
+          <h2 class="font-semibold">Operational Tools</h2>
+          <div class="mt-4 grid gap-3">
+            <.link
+              navigate={~p"/admin/youtube/channel"}
+              class="rounded-md bg-base-200 p-4 hover:bg-base-300"
+            >
+              <p class="font-medium">Register YouTube channel</p>
+              <p class="mt-1 text-sm text-base-content/60">
+                Save a real source for future background crawling.
+              </p>
+            </.link>
+            <.link
+              navigate={~p"/admin/ingest"}
+              class="rounded-md bg-base-200 p-4 hover:bg-base-300"
+            >
+              <p class="font-medium">Paste manual fragment</p>
+              <p class="mt-1 text-sm text-base-content/60">
+                Create sample segments and lore signals by hand.
+              </p>
+            </.link>
+          </div>
+        </div>
+
+        <div class="rounded-md border border-base-300 p-4">
+          <h2 class="font-semibold">Registered Sources</h2>
+          <div class="mt-4 space-y-3">
+            <%= for source <- @snapshot.sources do %>
+              <.link
+                navigate={~p"/admin/sources/#{source.id}"}
+                class="block rounded-md bg-base-200/60 p-3 hover:bg-base-300"
+              >
+                <div class="flex items-center justify-between gap-3">
+                  <p class="text-sm font-medium">{source.name}</p>
+                  <div class="flex items-center gap-2">
+                    <span class="rounded bg-base-300 px-2 py-1 text-xs text-base-content/60">
+                      {source.source_type}
+                    </span>
+                    <span class="rounded bg-base-300 px-2 py-1 text-xs text-base-content/60">
+                      {admin_source_status(source)}
+                    </span>
+                  </div>
+                </div>
+                <p class="mt-2 break-all text-xs leading-5 text-base-content/60">
+                  {source.url || source.external_id}
+                </p>
+              </.link>
+            <% end %>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+</main>

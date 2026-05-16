@@ -1,0 +1,820 @@
+<Layouts.flash_group flash={@flash} />
+
+<main class="min-h-screen bg-base-100 text-base-content">
+  <meta
+    :if={
+      auto_refresh?(@source) || transcript_refresh?(@transcript_snapshot) ||
+        intelligence_refresh?(@intelligence_snapshot)
+    }
+    http-equiv="refresh"
+    content="3"
+  />
+
+  <section class="border-b border-base-300">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide text-base-content/50">
+          Stream.Genome Source
+        </p>
+        <h1 class="text-xl font-semibold">{@source.name}</h1>
+      </div>
+      <.link navigate={~p"/admin"} class="rounded-md bg-base-200 px-3 py-2 text-sm font-medium">
+        Admin Console
+      </.link>
+    </div>
+  </section>
+
+  <% latest_run = latest_scan_run(@source) %>
+
+  <section class="mx-auto grid max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[1fr_24rem]">
+    <div class="space-y-6">
+      <section class="rounded-md border border-base-300 p-4">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p class="text-xs uppercase text-base-content/50">Current status</p>
+            <div class="mt-2 flex flex-wrap items-center gap-3">
+              <p class="text-3xl font-semibold">{latest_status(@source)}</p>
+              <span class={[
+                "rounded px-2 py-1 text-xs font-semibold",
+                status_class(latest_status(@source))
+              ]}>
+                {if auto_refresh?(@source), do: "auto-refreshing", else: "idle"}
+              </span>
+            </div>
+          </div>
+          <form method="post" action={~p"/admin/sources/#{@source.id}/scan"}>
+            <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+            <button class="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-content">
+              Start Scan
+            </button>
+          </form>
+        </div>
+
+        <dl class="mt-6 grid gap-4 md:grid-cols-2">
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Type</dt>
+            <dd class="mt-1 font-medium">{@source.source_type}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">External ID</dt>
+            <dd class="mt-1 break-all font-medium">{@source.external_id || "none"}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3 md:col-span-2">
+            <dt class="text-xs uppercase text-base-content/50">URL</dt>
+            <dd class="mt-1 break-all font-medium">{@source.url || "none"}</dd>
+          </div>
+        </dl>
+
+        <div
+          :if={latest_run && latest_run.error_message}
+          class="mt-4 rounded-md border border-error/40 bg-error/10 p-3"
+        >
+          <p class="text-xs font-semibold uppercase text-error">Last crawler error</p>
+          <p class="mt-2 break-words text-sm text-error">{latest_run.error_message}</p>
+        </div>
+      </section>
+
+      <section class="rounded-md border border-base-300 p-4">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 class="font-semibold">Transcript Pipeline</h2>
+            <p class="mt-1 text-sm text-base-content/60">
+              Stored videos are parsed into subtitles, saved as content_segments, then queued for AI extraction.
+            </p>
+          </div>
+          <span class={[
+            "rounded px-2 py-1 text-xs font-semibold",
+            if(transcript_refresh?(@transcript_snapshot),
+              do: "bg-info/15 text-info",
+              else: "bg-base-200 text-base-content/70"
+            )
+          ]}>
+            {if transcript_refresh?(@transcript_snapshot), do: "working", else: "idle"}
+          </span>
+        </div>
+
+        <div class="mt-4 h-2 overflow-hidden rounded bg-base-200">
+          <div
+            class="h-full bg-primary"
+            style={"width: #{transcript_percent(@transcript_snapshot)}%"}
+          >
+          </div>
+        </div>
+
+        <dl class="mt-4 grid gap-3 md:grid-cols-6">
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Videos</dt>
+            <dd class="mt-1 text-xl font-semibold">{@transcript_snapshot.total}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Pending</dt>
+            <dd class="mt-1 text-xl font-semibold">{@transcript_snapshot.pending}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Queued</dt>
+            <dd class="mt-1 text-xl font-semibold">{@transcript_snapshot.queued}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Running</dt>
+            <dd class="mt-1 text-xl font-semibold">{@transcript_snapshot.running}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Completed</dt>
+            <dd class="mt-1 text-xl font-semibold">{@transcript_snapshot.completed}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Failed</dt>
+            <dd class="mt-1 text-xl font-semibold">{@transcript_snapshot.failed}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3 md:col-span-2">
+            <dt class="text-xs uppercase text-base-content/50">Saved text rows</dt>
+            <dd class="mt-1 text-xl font-semibold">{@transcript_snapshot.segments}</dd>
+            <p class="mt-1 text-xs text-base-content/50">Postgres table: content_segments</p>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3 md:col-span-2">
+            <dt class="text-xs uppercase text-base-content/50">Languages</dt>
+            <dd class="mt-2 flex flex-wrap gap-2">
+              <%= for language <- @transcript_snapshot.languages do %>
+                <span class="rounded bg-base-100 px-2 py-1 text-xs font-semibold">
+                  {language_label(language.language)} / {language.count}
+                </span>
+              <% end %>
+              <span
+                :if={@transcript_snapshot.languages == []}
+                class="text-sm text-base-content/50"
+              >
+                no transcript rows yet
+              </span>
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3 md:col-span-4">
+            <dt class="text-xs uppercase text-base-content/50">What happens after this</dt>
+            <dd class="mt-1 text-sm leading-6 text-base-content/70">
+              Every transcript segment is sent to the intelligence queue, where entities, phrases, memes, events, and edges will be extracted.
+            </dd>
+          </div>
+        </dl>
+
+        <form
+          method="post"
+          action={~p"/admin/sources/#{@source.id}/transcripts"}
+          class="mt-4 flex flex-wrap items-end gap-3 rounded-md bg-base-200/50 p-3"
+        >
+          <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+          <label>
+            <span class="text-xs uppercase text-base-content/50">Batch size</span>
+            <input
+              name="limit"
+              value="5"
+              class="mt-1 w-28 rounded-md bg-base-100 px-3 py-2 text-sm"
+            />
+          </label>
+          <button class="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-content">
+            Queue Next Batch
+          </button>
+          <p class="max-w-2xl text-sm text-base-content/60">
+            Start small. A batch takes stored videos from content_items, fetches subtitles with yt-dlp, saves transcript lines, and marks each video as completed or failed.
+          </p>
+        </form>
+
+        <form
+          method="post"
+          action={~p"/admin/sources/#{@source.id}/transcripts/auto"}
+          class="mt-4 flex flex-wrap items-end gap-3 rounded-md border border-info/30 bg-info/5 p-3"
+        >
+          <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+          <label>
+            <span class="text-xs uppercase text-base-content/50">Batch size</span>
+            <input
+              name="batch[size]"
+              value="5"
+              class="mt-1 w-28 rounded-md bg-base-100 px-3 py-2 text-sm"
+            />
+          </label>
+          <label>
+            <span class="text-xs uppercase text-base-content/50">Batches</span>
+            <input
+              name="batch[count]"
+              value="20"
+              class="mt-1 w-28 rounded-md bg-base-100 px-3 py-2 text-sm"
+            />
+          </label>
+          <button class="rounded-md bg-info px-4 py-2 text-sm font-semibold text-info-content">
+            Start Auto Batches
+          </button>
+          <p class="max-w-2xl text-sm text-base-content/60">
+            Feeds the crawler in controlled waves. It waits while videos are queued or running, then schedules the next batch.
+          </p>
+        </form>
+
+        <div
+          :if={@transcript_snapshot.failed > 0}
+          class="mt-4 rounded-md border border-error/30 bg-error/5 p-4"
+        >
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 class="font-semibold text-error">Recent Transcript Failures</h3>
+              <p class="mt-1 text-sm text-base-content/60">
+                These are stored on content_items.metadata.transcript_error.
+              </p>
+            </div>
+            <form
+              method="post"
+              action={~p"/admin/sources/#{@source.id}/transcripts/retry-failed"}
+              class="flex items-end gap-2"
+            >
+              <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+              <label>
+                <span class="text-xs uppercase text-base-content/50">Retry</span>
+                <input
+                  name="limit"
+                  value="5"
+                  class="mt-1 w-20 rounded-md bg-base-100 px-3 py-2 text-sm"
+                />
+              </label>
+              <button class="rounded-md bg-error px-4 py-2 text-sm font-semibold text-error-content">
+                Retry Failed
+              </button>
+            </form>
+          </div>
+
+          <div class="mt-4 space-y-3">
+            <%= for item <- @transcript_snapshot.recent_failed do %>
+              <article class="rounded-md bg-base-200/70 p-3">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p class="font-medium">{item.title || item.external_id}</p>
+                    <p class="mt-1 break-all text-xs text-base-content/50">{item.url}</p>
+                  </div>
+                  <a
+                    :if={item.url}
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    class="rounded-md bg-base-300 px-3 py-2 text-xs font-medium"
+                  >
+                    Open
+                  </a>
+                </div>
+                <pre class="mt-3 max-h-96 overflow-auto whitespace-pre-wrap break-words rounded bg-base-100 p-3 text-xs text-error">{full_error(item.metadata["transcript_error"])}</pre>
+              </article>
+            <% end %>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-md border border-base-300 p-4">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 class="font-semibold">AI Analysis Windows</h2>
+            <p class="mt-1 text-sm text-base-content/60">
+              Transcript rows are grouped into durable language-aware windows before model extraction.
+            </p>
+          </div>
+          <span class="rounded bg-base-200 px-2 py-1 text-xs font-semibold text-base-content/70">
+            <%= cond do %>
+              <% not @ai_settings.enabled? -> %>
+                model disabled
+              <% intelligence_refresh?(@intelligence_snapshot) -> %>
+                waiting for model
+              <% true -> %>
+                model ready
+            <% end %>
+          </span>
+        </div>
+
+        <div class="mt-4 h-2 overflow-hidden rounded bg-base-200">
+          <div
+            class="h-full bg-info"
+            style={"width: #{intelligence_percent(@intelligence_snapshot)}%"}
+          >
+          </div>
+        </div>
+
+        <dl class="mt-4 grid gap-3 md:grid-cols-6">
+          <div class="rounded-md bg-base-200/70 p-3 md:col-span-3">
+            <dt class="text-xs uppercase text-base-content/50">AI Provider</dt>
+            <dd class="mt-1 break-all text-sm font-semibold">
+              {to_string(@ai_settings.provider)} / {@ai_settings.model || "no model"}
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3 md:col-span-3">
+            <dt class="text-xs uppercase text-base-content/50">Endpoint</dt>
+            <dd class="mt-1 break-all text-sm font-semibold">
+              {@ai_settings.endpoint || "not configured"}
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Text rows</dt>
+            <dd class="mt-1 text-xl font-semibold">{@intelligence_snapshot.total_segments}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Pending</dt>
+            <dd class="mt-1 text-xl font-semibold">{@intelligence_snapshot.pending_segments}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Ready</dt>
+            <dd class="mt-1 text-xl font-semibold">{@intelligence_snapshot.ready_segments}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Batched</dt>
+            <dd class="mt-1 text-xl font-semibold">{@intelligence_snapshot.batched_segments}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Extracted</dt>
+            <dd class="mt-1 text-xl font-semibold text-success">
+              {@intelligence_snapshot.extracted_segments}
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Runs</dt>
+            <dd class="mt-1 text-xl font-semibold">{@intelligence_snapshot.runs_total}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Awaiting</dt>
+            <dd class="mt-1 text-xl font-semibold">
+              {@intelligence_snapshot.runs_awaiting_model}
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Failed</dt>
+            <dd class="mt-1 text-xl font-semibold text-error">
+              {@intelligence_snapshot.runs_failed}
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Projected</dt>
+            <dd class="mt-1 text-xl font-semibold text-success">
+              {@intelligence_snapshot.runs_projected}
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Need Project</dt>
+            <dd class="mt-1 text-xl font-semibold text-warning">
+              {@intelligence_snapshot.runs_pending_projection}
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3 md:col-span-4">
+            <dt class="text-xs uppercase text-base-content/50">Model state</dt>
+            <dd class="mt-1 text-sm leading-6 text-base-content/70">
+              Awaiting means the job has handed a transcript window to the configured model.
+              Completed runs contain parsed lore JSON. Projected runs have been written into entities,
+              events, aliases, and observations.
+            </dd>
+          </div>
+        </dl>
+
+        <form
+          method="post"
+          action={~p"/admin/sources/#{@source.id}/intelligence/windows"}
+          class="mt-4 flex flex-wrap items-end gap-3 rounded-md bg-base-200/50 p-3"
+        >
+          <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+          <label>
+            <span class="text-xs uppercase text-base-content/50">Windows</span>
+            <input
+              name="limit"
+              value="5"
+              class="mt-1 w-28 rounded-md bg-base-100 px-3 py-2 text-sm"
+            />
+          </label>
+          <button class="rounded-md bg-info px-4 py-2 text-sm font-semibold text-info-content">
+            Queue AI Windows
+          </button>
+          <p class="max-w-2xl text-sm text-base-content/60">
+            Each window keeps original-language text, timestamps, and source segment IDs for later entity, meme, callback, and localization extraction.
+          </p>
+        </form>
+
+        <form
+          method="post"
+          action={~p"/admin/sources/#{@source.id}/intelligence/auto"}
+          class="mt-4 flex flex-wrap items-end gap-3 rounded-md border border-info/30 bg-info/5 p-3"
+        >
+          <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+          <label>
+            <span class="text-xs uppercase text-base-content/50">Windows</span>
+            <input
+              name="batch[windows]"
+              value="5"
+              class="mt-1 w-28 rounded-md bg-base-100 px-3 py-2 text-sm"
+            />
+          </label>
+          <label>
+            <span class="text-xs uppercase text-base-content/50">Batches</span>
+            <input
+              name="batch[count]"
+              value="20"
+              class="mt-1 w-28 rounded-md bg-base-100 px-3 py-2 text-sm"
+            />
+          </label>
+          <button class="rounded-md bg-info px-4 py-2 text-sm font-semibold text-info-content">
+            Start AI Auto Batches
+          </button>
+          <p class="max-w-2xl text-sm text-base-content/60">
+            Continuously feeds completed transcript rows into OpenAI in controlled waves, then projects
+            completed results into the lore graph.
+          </p>
+        </form>
+
+        <form
+          method="post"
+          action={~p"/admin/sources/#{@source.id}/intelligence/project"}
+          class="mt-4 flex flex-wrap items-end gap-3 rounded-md border border-success/30 bg-success/5 p-3"
+        >
+          <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+          <label>
+            <span class="text-xs uppercase text-base-content/50">Runs</span>
+            <input
+              name="limit"
+              value="10"
+              class="mt-1 w-28 rounded-md bg-base-100 px-3 py-2 text-sm"
+            />
+          </label>
+          <button class="rounded-md bg-success px-4 py-2 text-sm font-semibold text-success-content">
+            Project Completed Runs
+          </button>
+          <p class="max-w-2xl text-sm text-base-content/60">
+            Writes completed AI JSON into persistent lore tables: narrative_entities,
+            entity_observations, aliases, and narrative_events.
+          </p>
+        </form>
+
+        <section class="mt-4 rounded-md border border-warning/30 bg-warning/5 p-4">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 class="font-semibold">AI Spend Timeline</h3>
+              <p class="mt-1 text-sm text-base-content/60">
+                Estimated from provider token usage and configured dollars-per-million-token rates.
+              </p>
+            </div>
+            <p class="text-2xl font-semibold text-warning">
+              {money(@intelligence_snapshot.cost.cost_usd)}
+            </p>
+          </div>
+          <dl class="mt-4 grid gap-3 md:grid-cols-3">
+            <div class="rounded-md bg-base-200/70 p-3">
+              <dt class="text-xs uppercase text-base-content/50">Input tokens</dt>
+              <dd class="mt-1 font-semibold">
+                {integer(@intelligence_snapshot.cost.input_tokens)}
+              </dd>
+            </div>
+            <div class="rounded-md bg-base-200/70 p-3">
+              <dt class="text-xs uppercase text-base-content/50">Output tokens</dt>
+              <dd class="mt-1 font-semibold">
+                {integer(@intelligence_snapshot.cost.output_tokens)}
+              </dd>
+            </div>
+            <div class="rounded-md bg-base-200/70 p-3">
+              <dt class="text-xs uppercase text-base-content/50">Total tokens</dt>
+              <dd class="mt-1 font-semibold">
+                {integer(@intelligence_snapshot.cost.total_tokens)}
+              </dd>
+            </div>
+          </dl>
+          <div class="mt-4 space-y-2">
+            <%= for run_cost <- @intelligence_snapshot.cost.recent do %>
+              <div class="grid gap-2 rounded bg-base-200/70 p-3 text-sm md:grid-cols-[1fr_auto_auto_auto]">
+                <span>
+                  {run_cost.task} / {run_cost.language} / {format_datetime(run_cost.inserted_at)}
+                </span>
+                <span>{integer(run_cost.input_tokens)} in</span>
+                <span>{integer(run_cost.output_tokens)} out</span>
+                <span class="font-semibold text-warning">{money(run_cost.cost_usd)}</span>
+              </div>
+            <% end %>
+            <p
+              :if={@intelligence_snapshot.cost.recent == []}
+              class="text-sm text-base-content/50"
+            >
+              No priced AI calls recorded yet. New OpenAI runs will fill this timeline.
+            </p>
+          </div>
+        </section>
+
+        <div class="mt-4 space-y-3">
+          <%= for run <- @intelligence_snapshot.recent_runs do %>
+            <article class="rounded-md bg-base-200/70 p-3">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p class="font-medium">{run.task} / {run.language}</p>
+                  <p class="mt-1 text-xs text-base-content/50">
+                    {length(run.segment_ids)} segments · {format_datetime(run.inserted_at)}
+                  </p>
+                </div>
+                <span class={[
+                  "rounded px-2 py-1 text-xs font-semibold",
+                  extraction_status_class(run.status)
+                ]}>
+                  {run.status}
+                </span>
+              </div>
+              <pre
+                :if={run.status == "failed" && run.error_message}
+                class="mt-3 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded bg-base-100 p-3 text-xs text-error"
+              >{run.error_message}</pre>
+              <pre
+                :if={run.status == "completed" && run_result_preview(run)}
+                class="mt-3 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded bg-base-100 p-3 text-xs text-success"
+              >{run_result_preview(run)}</pre>
+            </article>
+          <% end %>
+
+          <div
+            :if={@intelligence_snapshot.recent_runs == []}
+            class="rounded-md border border-dashed border-base-300 p-6 text-center"
+          >
+            <p class="font-medium">No AI windows yet</p>
+            <p class="mt-2 text-sm text-base-content/60">
+              Queue windows after transcript rows are saved.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-md border border-success/30 bg-success/5 p-4">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 class="font-semibold">Projected Lore Result</h2>
+            <p class="mt-1 text-sm text-base-content/60">
+              This is the actual creator-universe graph built from projected AI runs for this source.
+            </p>
+          </div>
+          <.link
+            navigate={~p"/"}
+            class="rounded-md bg-base-200 px-3 py-2 text-sm font-semibold"
+          >
+            Public Portal
+          </.link>
+        </div>
+
+        <dl class="mt-4 grid gap-3 md:grid-cols-5">
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Entities</dt>
+            <dd class="mt-1 text-xl font-semibold">{@lore_snapshot.counts.entities}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Memes</dt>
+            <dd class="mt-1 text-xl font-semibold">{@lore_snapshot.counts.memes}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Phrases</dt>
+            <dd class="mt-1 text-xl font-semibold">{@lore_snapshot.counts.phrases}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Events</dt>
+            <dd class="mt-1 text-xl font-semibold">{@lore_snapshot.counts.events}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Observations</dt>
+            <dd class="mt-1 text-xl font-semibold">{@lore_snapshot.counts.observations}</dd>
+          </div>
+        </dl>
+
+        <div class="mt-4 grid gap-4 lg:grid-cols-2">
+          <div class="rounded-md bg-base-200/50 p-3">
+            <h3 class="font-semibold">Fresh Entities</h3>
+            <div class="mt-3 space-y-2">
+              <%= for entity <- @lore_snapshot.entities do %>
+                <div class="rounded bg-base-100 p-3">
+                  <div class="flex flex-wrap items-start justify-between gap-3">
+                    <p class="font-medium">{entity.canonical_name}</p>
+                    <span class="rounded bg-base-200 px-2 py-1 text-xs">
+                      {entity.entity_type} / {percent_label(entity.confidence)}
+                    </span>
+                  </div>
+                  <p class="mt-2 text-xs leading-5 text-base-content/60">{entity.summary}</p>
+                </div>
+              <% end %>
+              <p :if={@lore_snapshot.entities == []} class="text-sm text-base-content/50">
+                Nothing projected yet.
+              </p>
+            </div>
+          </div>
+
+          <div class="rounded-md bg-base-200/50 p-3">
+            <h3 class="font-semibold">Fresh Events</h3>
+            <div class="mt-3 space-y-2">
+              <%= for event <- @lore_snapshot.events do %>
+                <div class="rounded bg-base-100 p-3">
+                  <div class="flex flex-wrap items-start justify-between gap-3">
+                    <p class="font-medium">{event.title}</p>
+                    <span class="rounded bg-base-200 px-2 py-1 text-xs">
+                      {event.event_type} / {percent_label(event.intensity)}
+                    </span>
+                  </div>
+                  <p class="mt-2 text-xs leading-5 text-base-content/60">{event.summary}</p>
+                </div>
+              <% end %>
+              <p :if={@lore_snapshot.events == []} class="text-sm text-base-content/50">
+                No projected events yet.
+              </p>
+            </div>
+          </div>
+
+          <div class="rounded-md bg-base-200/50 p-3 lg:col-span-2">
+            <h3 class="font-semibold">Evidence Observations</h3>
+            <div class="mt-3 grid gap-2 md:grid-cols-2">
+              <%= for observation <- @lore_snapshot.observations do %>
+                <div class="rounded bg-base-100 p-3">
+                  <div class="flex flex-wrap items-start justify-between gap-3">
+                    <p class="font-medium">
+                      {observation.entity && observation.entity.canonical_name}
+                    </p>
+                    <span class="rounded bg-base-200 px-2 py-1 text-xs">
+                      {observation.observation_type} / {percent_label(observation.confidence)}
+                    </span>
+                  </div>
+                  <p class="mt-2 text-sm text-base-content/70">{observation.surface_text}</p>
+                  <p class="mt-2 line-clamp-2 text-xs text-base-content/50">
+                    {observation.content_segment && observation.content_segment.body}
+                  </p>
+                </div>
+              <% end %>
+              <p :if={@lore_snapshot.observations == []} class="text-sm text-base-content/50">
+                No evidence rows yet.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-md border border-base-300 p-4">
+        <h2 class="font-semibold">Live Scan Monitor</h2>
+        <dl class="mt-4 grid gap-3 md:grid-cols-4">
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Discovered</dt>
+            <dd class="mt-1 text-xl font-semibold">
+              {if latest_run, do: latest_run.items_discovered, else: 0}
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Saved new</dt>
+            <dd class="mt-1 text-xl font-semibold">
+              {if latest_run, do: latest_run.items_enqueued, else: 0}
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Started</dt>
+            <dd class="mt-1 text-sm font-medium">
+              {if latest_run, do: format_datetime(latest_run.started_at), else: "not yet"}
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Finished</dt>
+            <dd class="mt-1 text-sm font-medium">
+              {if latest_run, do: format_datetime(latest_run.finished_at), else: "not yet"}
+            </dd>
+          </div>
+        </dl>
+
+        <dl class="mt-4 grid gap-3 md:grid-cols-2">
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Proxy used by crawler</dt>
+            <dd class="mt-1 break-all font-medium">{proxy_label()}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">yt-dlp cookies</dt>
+            <dd class="mt-1 break-all font-medium">{cookies_label()}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Crawler state</dt>
+            <dd class="mt-1 break-all font-medium">
+              {metadata_value(latest_run, "crawler_state")}
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3 md:col-span-2">
+            <dt class="text-xs uppercase text-base-content/50">Archive crawler</dt>
+            <dd class="mt-1 break-words font-medium">
+              {metadata_value(latest_run, "archive_error")}
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Discovery adapter</dt>
+            <dd class="mt-1 break-all font-medium">
+              {metadata_value(latest_run, "discovery_adapter")}
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Archive limit</dt>
+            <dd class="mt-1 break-all font-medium">
+              {metadata_value(latest_run, "archive_limit")}
+            </dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Feed URL</dt>
+            <dd class="mt-1 break-all font-medium">{metadata_value(latest_run, "feed_url")}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3">
+            <dt class="text-xs uppercase text-base-content/50">Channel ID</dt>
+            <dd class="mt-1 break-all font-medium">{metadata_value(latest_run, "channel_id")}</dd>
+          </div>
+          <div class="rounded-md bg-base-200/70 p-3 md:col-span-2">
+            <dt class="text-xs uppercase text-base-content/50">Internal reason / locator</dt>
+            <dd class="mt-1 break-words font-medium">
+              {primary_diagnostic(latest_run)}
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="rounded-md border border-base-300 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 class="font-semibold">Discovered Videos</h2>
+          <span class="text-sm text-base-content/50">{length(@source.content_items)} shown</span>
+        </div>
+
+        <div class="mt-4 space-y-3">
+          <%= for item <- @source.content_items do %>
+            <article class="rounded-md bg-base-200/70 p-3">
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p class="font-medium">{item.title || item.external_id || "Untitled video"}</p>
+                  <p class="mt-1 text-xs text-base-content/50">
+                    Published: {format_datetime(item.published_at)}
+                  </p>
+                </div>
+                <a
+                  :if={item.url}
+                  href={item.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  class="rounded-md bg-base-300 px-3 py-2 text-sm font-medium"
+                >
+                  Open
+                </a>
+              </div>
+              <p class="mt-2 break-all text-sm text-base-content/60">{item.url}</p>
+            </article>
+          <% end %>
+
+          <div
+            :if={@source.content_items == []}
+            class="rounded-md border border-dashed border-base-300 p-6 text-center"
+          >
+            <p class="font-medium">No videos stored yet</p>
+            <p class="mt-2 text-sm text-base-content/60">
+              If the scan fails or stays at zero, the exact network/feed error is shown above.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-md border border-base-300 p-4">
+        <h2 class="font-semibold">Scan History</h2>
+        <div class="mt-4 space-y-3">
+          <%= for scan_run <- @source.scan_runs do %>
+            <div class="rounded-md bg-base-200/70 p-3">
+              <div class="flex items-center justify-between gap-3">
+                <p class="font-medium">{scan_run.status}</p>
+                <span class="text-xs text-base-content/50">
+                  {format_datetime(scan_run.inserted_at)}
+                </span>
+              </div>
+              <div class="mt-3 grid gap-3 text-sm md:grid-cols-3">
+                <p>Discovered: {scan_run.items_discovered}</p>
+                <p>Enqueued: {scan_run.items_enqueued}</p>
+                <p>Finished: {format_datetime(scan_run.finished_at)}</p>
+              </div>
+              <p :if={scan_run.error_message} class="mt-2 text-sm text-error">
+                {scan_run.error_message}
+              </p>
+            </div>
+          <% end %>
+
+          <div
+            :if={@source.scan_runs == []}
+            class="rounded-md border border-dashed border-base-300 p-6 text-center"
+          >
+            <p class="font-medium">No scans yet</p>
+            <p class="mt-2 text-sm text-base-content/60">
+              Start a scan to enqueue source discovery.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="space-y-4">
+      <section class="rounded-md border border-base-300 p-4">
+        <h2 class="font-semibold">What Start Scan Does Now</h2>
+        <div class="mt-4 space-y-3 text-sm leading-6 text-base-content/70">
+          <p>It creates a durable scan run.</p>
+          <p>It queues an Oban background job.</p>
+          <p>
+            The worker tries the full YouTube archive through yt-dlp first, then falls back to Atom feed.
+          </p>
+        </div>
+      </section>
+
+      <section class="rounded-md border border-base-300 p-4">
+        <h2 class="font-semibold">Next Crawler Slice</h2>
+        <div class="mt-4 space-y-3 text-sm leading-6 text-base-content/70">
+          <p>Fetch transcripts or captions for discovered videos.</p>
+          <p>Create content segments from transcript lines.</p>
+          <p>Queue AI extraction per segment.</p>
+        </div>
+      </section>
+    </aside>
+  </section>
+</main>

@@ -1,0 +1,408 @@
+<Layouts.flash_group flash={@flash} />
+
+<main class="min-h-screen bg-[#080a0f] text-white">
+  <header class="sticky top-0 z-30 border-b border-white/10 bg-[#080a0f]/90 backdrop-blur">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
+      <.link navigate={~p"/"} class="font-semibold tracking-wide">{@copy.brand}</.link>
+      <nav class="flex items-center gap-2 text-sm">
+        <.link
+          navigate={~p"/?lang=ru"}
+          class={[
+            "rounded-md border px-3 py-2 font-medium",
+            if(@locale == "ru",
+              do: "border-[#66e3d4] text-[#66e3d4]",
+              else: "border-white/15 text-white/70 hover:bg-white/10"
+            )
+          ]}
+        >
+          RU
+        </.link>
+        <.link
+          navigate={~p"/?lang=en"}
+          class={[
+            "rounded-md border px-3 py-2 font-medium",
+            if(@locale == "en",
+              do: "border-[#66e3d4] text-[#66e3d4]",
+              else: "border-white/15 text-white/70 hover:bg-white/10"
+            )
+          ]}
+        >
+          EN
+        </.link>
+        <a href="#atlas" class="rounded-md bg-white px-3 py-2 font-medium text-[#080a0f]">
+          {@copy.explore}
+        </a>
+        <a
+          href="#sources"
+          class="rounded-md border border-white/15 px-3 py-2 text-white/80 hover:bg-white/10"
+        >
+          {@copy.sources}
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="relative overflow-hidden border-b border-white/10">
+    <div class="absolute inset-0 lore-grid"></div>
+    <div class="absolute inset-x-0 top-0 h-64 bg-[linear-gradient(120deg,rgba(46,204,184,0.22),rgba(255,91,91,0.14),rgba(255,214,102,0.12))]">
+    </div>
+
+    <div class="relative mx-auto grid max-w-7xl gap-10 px-5 py-16 lg:min-h-[760px] lg:grid-cols-[minmax(0,1fr)_34rem] lg:items-center lg:py-20">
+      <div class="flex flex-col justify-center">
+        <p class="text-sm font-semibold uppercase tracking-[0.28em] text-[#66e3d4]">
+          {@copy.eyebrow}
+        </p>
+        <h1 class="mt-5 max-w-4xl text-5xl font-black leading-[0.98] tracking-normal text-white md:text-7xl">
+          {@copy.headline}
+        </h1>
+        <p class="mt-6 max-w-2xl text-lg leading-8 text-white/70">
+          {@copy.lead}
+        </p>
+
+        <form
+          id="public-lore-search"
+          method="get"
+          action={~p"/"}
+          class="mt-8 max-w-3xl rounded-md border border-[#66e3d4]/25 bg-black/35 p-3"
+        >
+          <input type="hidden" name="lang" value={@locale} />
+          <label for="q" class="text-xs font-semibold uppercase tracking-[0.18em] text-[#66e3d4]">
+            {@copy.search_label}
+          </label>
+          <div class="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
+            <input
+              id="q"
+              name="q"
+              value={@search.query}
+              placeholder={@copy.search_placeholder}
+              class="min-h-12 rounded-md border border-white/10 bg-white/[0.06] px-4 text-base text-white placeholder:text-white/35 focus:border-[#66e3d4] focus:outline-none"
+            />
+            <button class="rounded-md bg-[#66e3d4] px-5 py-3 text-sm font-bold text-[#07100f]">
+              {@copy.search_button}
+            </button>
+          </div>
+          <p class="mt-3 text-xs leading-5 text-white/45">{@copy.search_hint}</p>
+        </form>
+
+        <div class="mt-5 flex flex-wrap gap-3">
+          <a
+            href="#public-search-results"
+            class="rounded-md bg-[#66e3d4] px-5 py-3 text-sm font-bold text-[#07100f]"
+          >
+            {@copy.primary}
+          </a>
+          <a
+            href="#timeline"
+            class="rounded-md border border-white/15 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10"
+          >
+            {@copy.secondary}
+          </a>
+        </div>
+
+        <dl class="mt-12 grid max-w-3xl grid-cols-2 gap-3 md:grid-cols-4">
+          <div class="rounded-md border border-white/10 bg-white/[0.04] p-4">
+            <dt class="text-xs uppercase text-white/45">{@copy.stat_sources}</dt>
+            <dd class="mt-2 text-3xl font-black">{@snapshot.counts.sources}</dd>
+          </div>
+          <div class="rounded-md border border-white/10 bg-white/[0.04] p-4">
+            <dt class="text-xs uppercase text-white/45">{@copy.stat_memes}</dt>
+            <dd class="mt-2 text-3xl font-black">{@snapshot.counts.memes}</dd>
+          </div>
+          <div class="rounded-md border border-white/10 bg-white/[0.04] p-4">
+            <dt class="text-xs uppercase text-white/45">{@copy.stat_events}</dt>
+            <dd class="mt-2 text-3xl font-black">{@snapshot.counts.events}</dd>
+          </div>
+          <div class="rounded-md border border-white/10 bg-white/[0.04] p-4">
+            <dt class="text-xs uppercase text-white/45">{@copy.stat_edges}</dt>
+            <dd class="mt-2 text-3xl font-black">{@snapshot.counts.edges}</dd>
+          </div>
+        </dl>
+
+        <div class="mt-5 grid max-w-3xl gap-3 md:grid-cols-3">
+          <div class="rounded-md border border-[#66e3d4]/25 bg-[#66e3d4]/10 p-4">
+            <p class="text-xs uppercase tracking-wide text-[#66e3d4]">{@copy.stat_videos}</p>
+            <p class="mt-2 text-2xl font-black">{@snapshot.counts.content_items}</p>
+          </div>
+          <div class="rounded-md border border-[#ffcf66]/25 bg-[#ffcf66]/10 p-4">
+            <p class="text-xs uppercase tracking-wide text-[#ffcf66]">{@copy.stat_segments}</p>
+            <p class="mt-2 text-2xl font-black">{@snapshot.counts.segments}</p>
+          </div>
+          <div class="rounded-md border border-[#9fb7ff]/25 bg-[#9fb7ff]/10 p-4">
+            <p class="text-xs uppercase tracking-wide text-[#9fb7ff]">{@copy.stat_entities}</p>
+            <p class="mt-2 text-2xl font-black">{@snapshot.counts.entities}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative rounded-md border border-white/10 bg-[#10131b]/80 p-5 shadow-2xl shadow-black/40">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs uppercase tracking-[0.22em] text-white/45">{@copy.map_label}</p>
+            <h2 class="mt-1 text-xl font-bold">{@copy.map_title}</h2>
+          </div>
+          <span class="rounded bg-[#243b38] px-3 py-1 text-xs font-semibold text-[#8cf4e5]">
+            {@copy.indexing}
+          </span>
+        </div>
+
+        <div class="relative mt-6 h-[22rem] overflow-hidden rounded-md border border-white/10 bg-[#0a0d14]">
+          <div class="absolute left-[8%] top-[18%] h-3 w-3 rounded-full bg-[#66e3d4] shadow-[0_0_32px_rgba(102,227,212,0.9)]">
+          </div>
+          <div class="absolute left-[30%] top-[50%] h-4 w-4 rounded-full bg-[#ffcf66] shadow-[0_0_34px_rgba(255,207,102,0.85)]">
+          </div>
+          <div class="absolute right-[18%] top-[24%] h-5 w-5 rounded-full bg-[#ff6b6b] shadow-[0_0_36px_rgba(255,107,107,0.8)]">
+          </div>
+          <div class="absolute bottom-[20%] right-[36%] h-3 w-3 rounded-full bg-[#9fb7ff] shadow-[0_0_30px_rgba(159,183,255,0.85)]">
+          </div>
+          <div class="absolute left-[13%] top-[21%] h-px w-[16rem] rotate-[22deg] bg-[#66e3d4]/40">
+          </div>
+          <div class="absolute left-[34%] top-[53%] h-px w-[16rem] -rotate-[28deg] bg-[#ffcf66]/40">
+          </div>
+          <div class="absolute right-[22%] top-[29%] h-px w-[11rem] rotate-[68deg] bg-[#ff6b6b]/40">
+          </div>
+
+          <div class="absolute left-5 bottom-5 max-w-sm rounded-md border border-white/10 bg-black/45 p-4 backdrop-blur">
+            <p class="text-sm font-semibold">{featured_meme(@snapshot, @locale)}</p>
+            <p class="mt-2 text-xs leading-5 text-white/60">
+              {@copy.map_note}
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-4 rounded-md border border-white/10 bg-black/25 p-4">
+          <p class="text-xs uppercase tracking-[0.2em] text-[#66e3d4]">{@copy.portal_deck}</p>
+          <p class="mt-2 text-sm leading-6 text-white/65">{@copy.portal_deck_text}</p>
+          <div class="mt-4 grid gap-2 text-xs md:grid-cols-3">
+            <span class="rounded bg-white/10 px-2 py-2">{@copy.source_coverage}</span>
+            <span class="rounded bg-white/10 px-2 py-2">{@copy.transcript_depth}</span>
+            <span class="rounded bg-white/10 px-2 py-2">{@copy.lore_memory}</span>
+          </div>
+          <p class="mt-3 text-xs text-white/45">{@copy.cost_note}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="border-b border-white/10 bg-[#0d1118]">
+    <div class="mx-auto grid max-w-7xl gap-6 px-5 py-10 lg:grid-cols-[1fr_1fr_1fr]">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#ffcf66]">
+          {@copy.study_eyebrow}
+        </p>
+        <h2 class="mt-3 text-3xl font-black">{@copy.study_title}</h2>
+      </div>
+      <p class="text-sm leading-7 text-white/65">
+        {@copy.study_text}
+      </p>
+      <div class="rounded-md border border-white/10 bg-white/[0.04] p-4">
+        <div class="flex items-center justify-between text-sm">
+          <span class="font-semibold">{@copy.pipeline}</span>
+          <span class="text-[#66e3d4]">{@copy.planned}</span>
+        </div>
+        <div class="mt-4 grid grid-cols-4 gap-2">
+          <div class="h-2 rounded bg-[#66e3d4]"></div>
+          <div class="h-2 rounded bg-[#ffcf66]"></div>
+          <div class="h-2 rounded bg-[#ff6b6b]"></div>
+          <div class="h-2 rounded bg-[#9fb7ff]"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="public-search-results" class="border-b border-white/10 bg-[#090c12]">
+    <div class="mx-auto max-w-7xl px-5 py-10">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#66e3d4]">
+            {@copy.search_results}
+          </p>
+          <h2 class="mt-3 text-3xl font-black">
+            <%= if @search.query == "" do %>
+              {@copy.search_hint}
+            <% else %>
+              {@search.query}
+            <% end %>
+          </h2>
+        </div>
+        <span class="rounded border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white/55">
+          {search_total(@search)}
+        </span>
+      </div>
+
+      <div
+        :if={@search.query != "" && search_total(@search) == 0}
+        class="mt-6 rounded-md border border-dashed border-white/15 p-6 text-white/60"
+      >
+        {@copy.no_search_results}
+      </div>
+
+      <div :if={@search.query != ""} class="mt-6 grid gap-4 lg:grid-cols-3">
+        <section class="rounded-md border border-white/10 bg-white/[0.04] p-4">
+          <h3 class="font-bold">{@copy.entities_found}</h3>
+          <div class="mt-4 space-y-3">
+            <%= for entity <- @search.entities do %>
+              <article class="rounded bg-black/25 p-3">
+                <div class="flex items-start justify-between gap-3">
+                  <p class="font-semibold">{public_text(entity.canonical_name, @locale)}</p>
+                  <span class="rounded bg-white/10 px-2 py-1 text-xs text-white/55">
+                    {entity.entity_type}
+                  </span>
+                </div>
+                <p class="mt-2 text-sm leading-6 text-white/60">
+                  {public_text(entity.summary, @locale)}
+                </p>
+              </article>
+            <% end %>
+          </div>
+        </section>
+
+        <section class="rounded-md border border-white/10 bg-white/[0.04] p-4">
+          <h3 class="font-bold">{@copy.events_found}</h3>
+          <div class="mt-4 space-y-3">
+            <%= for event <- @search.events do %>
+              <article class="rounded bg-black/25 p-3">
+                <p class="font-semibold">{public_text(event.title, @locale)}</p>
+                <p class="mt-1 text-xs text-white/45">
+                  {format_date(event.started_at)} / {@copy.intensity} {percent(event.intensity)}
+                </p>
+                <p class="mt-2 text-sm leading-6 text-white/60">
+                  {public_text(event.summary, @locale)}
+                </p>
+              </article>
+            <% end %>
+          </div>
+        </section>
+
+        <section class="rounded-md border border-white/10 bg-white/[0.04] p-4">
+          <h3 class="font-bold">{@copy.fragments_found}</h3>
+          <div class="mt-4 space-y-3">
+            <%= for segment <- @search.segments do %>
+              <article class="rounded bg-black/25 p-3">
+                <div class="flex justify-between gap-3 text-xs text-white/45">
+                  <span>{segment.speaker_label || segment.segment_type}</span>
+                  <span>{format_offset(segment.starts_at_ms)}</span>
+                </div>
+                <p class="mt-2 text-sm leading-6 text-white/70">
+                  {public_text(segment.body, @locale)}
+                </p>
+              </article>
+            <% end %>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <section id="atlas" class="mx-auto grid max-w-7xl gap-6 px-5 py-10 xl:grid-cols-[1fr_24rem]">
+    <div class="space-y-6">
+      <section>
+        <div class="mb-4 flex items-center justify-between gap-4">
+          <h2 class="text-2xl font-black">{@copy.known_links}</h2>
+          <span class="text-sm text-white/45">
+            {@snapshot.counts.edges} {@copy.relationships}
+          </span>
+        </div>
+        <div class="grid gap-3 md:grid-cols-2">
+          <%= for edge <- @snapshot.edges do %>
+            <div class="rounded-md border border-white/10 bg-white/[0.04] p-4">
+              <div class="flex items-center justify-between gap-3 text-sm">
+                <span class="font-bold text-white">
+                  {public_text(edge.from_entity.canonical_name, @locale)}
+                </span>
+                <span class="rounded bg-white/10 px-2 py-1 text-xs text-white/60">
+                  {edge.edge_type}
+                </span>
+                <span class="font-bold text-white">
+                  {public_text(edge.to_entity.canonical_name, @locale)}
+                </span>
+              </div>
+              <div class="mt-4 h-2 overflow-hidden rounded bg-white/10">
+                <div class="h-full bg-[#66e3d4]" style={"width: #{round(edge.weight * 100)}%"}>
+                </div>
+              </div>
+              <p :if={edge.event} class="mt-2 text-xs text-white/45">
+                {@copy.evidence}: {public_text(edge.event.title, @locale)}
+              </p>
+            </div>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="grid gap-6 lg:grid-cols-2">
+        <div id="timeline" class="rounded-md border border-white/10 bg-white/[0.04] p-4">
+          <h2 class="text-xl font-black">{@copy.active_memes}</h2>
+          <div class="mt-4 space-y-4">
+            <%= for meme <- @snapshot.memes do %>
+              <div>
+                <div class="flex justify-between gap-3">
+                  <span class="text-sm font-bold">
+                    {public_text(meme.canonical_name, @locale)}
+                  </span>
+                  <span class="text-xs text-[#66e3d4]">{percent(meme.confidence)}</span>
+                </div>
+                <p class="mt-1 text-sm leading-6 text-white/60">
+                  {public_text(meme.summary, @locale)}
+                </p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <div class="rounded-md border border-white/10 bg-white/[0.04] p-4">
+          <h2 class="text-xl font-black">{@copy.timeline}</h2>
+          <ol class="mt-4 space-y-4">
+            <%= for event <- @snapshot.events do %>
+              <li class="border-l-2 border-[#ffcf66] pl-3">
+                <p class="text-sm font-bold">{public_text(event.title, @locale)}</p>
+                <p class="text-xs text-white/45">
+                  {format_date(event.started_at)} / {@copy.intensity} {percent(event.intensity)}
+                </p>
+                <p class="mt-1 text-sm leading-6 text-white/60">
+                  {public_text(event.summary, @locale)}
+                </p>
+              </li>
+            <% end %>
+          </ol>
+        </div>
+      </section>
+    </div>
+
+    <aside class="space-y-6">
+      <section id="sources" class="rounded-md border border-white/10 bg-white/[0.04] p-4">
+        <h2 class="text-xl font-black">{@copy.sources_title}</h2>
+        <div class="mt-4 space-y-3">
+          <%= for source <- @snapshot.sources do %>
+            <div class="rounded-md bg-black/25 p-3">
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-sm font-bold">{source.name}</p>
+                <span class="rounded bg-[#243b38] px-2 py-1 text-xs text-[#8cf4e5]">
+                  {source.source_type}
+                </span>
+              </div>
+              <p class="mt-2 break-all text-xs leading-5 text-white/45">
+                {source.url || source.external_id}
+              </p>
+            </div>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="rounded-md border border-white/10 bg-white/[0.04] p-4">
+        <h2 class="text-xl font-black">{@copy.fragments}</h2>
+        <div class="mt-4 space-y-3">
+          <%= for segment <- @snapshot.segments do %>
+            <div class="rounded-md bg-black/25 p-3">
+              <div class="flex justify-between gap-3 text-xs text-white/45">
+                <span>{segment.speaker_label || segment.segment_type}</span>
+                <span>{format_offset(segment.starts_at_ms)}</span>
+              </div>
+              <p class="mt-2 text-sm leading-6 text-white/70">
+                {public_text(segment.body, @locale)}
+              </p>
+            </div>
+          <% end %>
+        </div>
+      </section>
+    </aside>
+  </section>
+</main>

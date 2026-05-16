@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Stream.Genome Postgres",
+      "Group": "Stream.Genome",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "stream_genome_dev",
+      "Username": "postgres",
+      "Password": "postgres",
+      "SavePassword": true,
+      "SSLMode": "prefer"
+    }
+  }
+}
